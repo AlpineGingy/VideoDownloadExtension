@@ -14,7 +14,7 @@ const {
   normalizeUrl,
   quoteShellArgument,
   suggestFilename
-} = require("../media-utils.js");
+} = require("../extension/media-utils.js");
 
 test("getExtension ignores query strings and normalizes case", () => {
   assert.equal(getExtension("https://cdn.example/video.MP4?token=abc"), "mp4");

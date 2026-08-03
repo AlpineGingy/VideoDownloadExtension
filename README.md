@@ -2,6 +2,13 @@
 
 Media Finder is a small Manifest V3 Chrome extension that discovers audio and video associated with the current page.
 
+## Repository layout
+
+- `extension/` is the complete unpacked Chrome extension. Select this folder in `chrome://extensions`.
+- `companion/` contains the cross-platform .NET native host and its tests.
+- `companion/installer/` contains native Windows, macOS, and Linux installer definitions and fallback scripts.
+- `companion/artifacts/` contains locally generated release outputs and fallback ZIPs.
+
 It currently finds:
 
 - Direct URLs from `<video>`, `<audio>`, and their `<source>` elements.
@@ -42,6 +49,8 @@ Selecting **Settings** or a result's **Options** button opens the remembered dow
 - Destination: `Downloads/Media Finder`, `Downloads`, `Videos`, or `Desktop`.
 - Optional embedded metadata, thumbnail, and English subtitles.
 
+The full Settings view also includes **Download companion**, which always opens the platform-aware setup page. This remains available after the automatic missing-companion prompt has been dismissed or is no longer visible.
+
 The 760-by-600 popup gives discovery and download cards more room. The Downloads view stores up to 50 recent companion or direct Chrome jobs in extension storage. Multiple downloads can run at once, each job has a horizontal percentage bar, yt-dlp progress is pushed to an open popup before persistence, and frequent storage writes are coalesced to prevent an update backlog. Direct Chrome downloads are polled while the popup is visible because Chrome does not emit events for byte-only changes. Reopening the popup restores title, thumbnail, duration, status, progress, and destination details.
 
 Every companion download creates a timestamped diagnostic log with elapsed timing, lifecycle phases, the sanitized yt-dlp command, stdout/stderr, exit code, completion, cancellation, and errors. Use **Copy log** on a download card to copy the newest portion. The companion retains the newest 20 logs in the current user's local application-data `MediaFinder/Logs` folder. Cookie values are never written, and signed query values are removed from the logged command; yt-dlp's own raw output can still contain media URLs, so review a copied log before sharing it.
@@ -71,24 +80,27 @@ Site support can change independently of this extension. Signed URLs may expire,
 1. Open `chrome://extensions` in Chrome.
 2. Turn on **Developer mode**.
 3. Select **Load unpacked**.
-4. Choose this project folder.
+4. Choose the `extension` folder inside this project.
 5. Open a page containing a video, play it, and select the Media Finder toolbar icon.
 
 Chrome blocks extensions from scanning internal pages such as `chrome://extensions` and the Chrome Web Store.
 
 ## Install the local companion
 
-The extension shows one focused setup prompt when the native host is unavailable. Release packages are self-contained; users do not need .NET installed.
+The extension shows one focused setup prompt when the native host is unavailable. Release installers are self-contained; users do not need .NET installed.
 
-Supported packages:
+For a fresh installation:
 
-- Windows x64 and ARM64.
-- macOS Intel and Apple Silicon.
-- Linux x64 and ARM64.
+1. Install the unpacked Chrome extension from the `extension/` folder, or install its published Chrome package when one is available.
+2. Open Media Finder and select **Download companion** on the setup page.
+3. Double-click the downloaded installer and follow the operating-system prompts.
+4. Restart Chrome and select **Verify companion**.
 
-Each package includes an installer and uninstaller. The installer registers the Chrome Native Messaging host for the current user and downloads the matching official yt-dlp binary beside the companion. See [`companion/README.md`](companion/README.md) for local builds, release configuration, and platform details.
+The setup page chooses `Setup.exe` for Windows, `.pkg` for macOS, and `.deb` for Ubuntu/Debian. Linux users on Fedora, RHEL, or openSUSE can select the RPM link instead. Packages are available for Windows x64/ARM64, macOS Intel/Apple Silicon, and Linux x64/ARM64.
 
-The setup-page download button becomes active after `MEDIA_FINDER_RELEASE_BASE_URL` is configured in `setup-config.js`. A tagged GitHub release automatically builds all six packages through `.github/workflows/release-companion.yml`.
+The installer registers the Chrome Native Messaging host and downloads the matching yt-dlp, Deno, and FFmpeg tools beside the companion. An internet connection is required during installation. See [`companion/README.md`](companion/README.md) for uninstalling, fallback ZIPs, local builds, release configuration, and platform details.
+
+The setup-page download button points at this repository's latest GitHub Release through `extension/setup-config.js`. A tagged release automatically builds native installers and fallback ZIPs through `.github/workflows/release-companion.yml`.
 
 ## Development checks
 

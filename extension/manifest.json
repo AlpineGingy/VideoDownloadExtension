@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzJqp5I6nFNJtNBr1kEhuDoUOemDLy7A0G+x1U4v6IO9VmQZ4+pF5KPnKgJtMp9g1qIc6gLcPhwh6iMHenKYw9RZk4fNX5UA7dUf8topvYAKC1vn+hBgosDFNCXkjbUNDkG71vnzdOvQF0jkl8CQNrVCBM0+/KInOB6viwhB6jQH6HHiO9fYWC0U0Icv7iL9+BrtCMS/icn60B1BfPOT2e2ih1wJHSJsBsSaAd2c0XZ1Hdogn2WxnuPOABfpFmP0DGEpcN2kMUGc93VjTSpRarB/YGDSG31Zmze6Im7yLVVd30dIVLzdv8NhmV7HldtHif1t8ta03UOM5BXtyz4056wIDAQAB",
   "name": "Media Finder",
-  "version": "0.8.3",
+  "version": "0.9.1",
   "description": "Find audio, video, and media stream manifests used by the current page.",
   "icons": {
     "16": "assets/icons/icon-16.png",

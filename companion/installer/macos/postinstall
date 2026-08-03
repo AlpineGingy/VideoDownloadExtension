@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -eu
+
+# Finishes the PKG payload by downloading tools and registering the native host.
+SCRIPT_DIRECTORY=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+"$SCRIPT_DIRECTORY/install-system-unix.sh" macos

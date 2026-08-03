@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+set -eu
+
+# Finishes DEB installation after the package manager places the host payload.
+/opt/media-finder/installer/install-system-unix.sh linux

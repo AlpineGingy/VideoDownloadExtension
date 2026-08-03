@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 $projectPath = Join-Path $PSScriptRoot "..\MediaFinder.Companion\MediaFinder.Companion.csproj"
 $artifactRoot = Join-Path $PSScriptRoot "..\artifacts"
+$installerRoot = Join-Path $PSScriptRoot "..\installer"
 $runtimeIdentifiers = @("win-x64", "win-arm64", "osx-x64", "osx-arm64", "linux-x64", "linux-arm64")
 $resolvedArtifactRoot = [IO.Path]::GetFullPath($artifactRoot).TrimEnd([IO.Path]::DirectorySeparatorChar)
 
@@ -26,14 +27,14 @@ foreach ($runtimeIdentifier in $runtimeIdentifiers) {
 
     if ($runtimeIdentifier.StartsWith("win-")) {
         Copy-Item "$publishDirectory\media-finder-companion.exe" $packageDirectory
-        Copy-Item "$PSScriptRoot\install-windows.cmd" $packageDirectory
-        Copy-Item "$PSScriptRoot\install-windows.ps1" $packageDirectory
-        Copy-Item "$PSScriptRoot\uninstall-windows.ps1" $packageDirectory
+        Copy-Item "$installerRoot\install-windows.cmd" $packageDirectory
+        Copy-Item "$installerRoot\install-windows.ps1" $packageDirectory
+        Copy-Item "$installerRoot\uninstall-windows.ps1" $packageDirectory
     }
     else {
         Copy-Item "$publishDirectory\media-finder-companion" $packageDirectory
-        Copy-Item "$PSScriptRoot\install-unix.sh" $packageDirectory
-        Copy-Item "$PSScriptRoot\uninstall-unix.sh" $packageDirectory
+        Copy-Item "$installerRoot\install-unix.sh" $packageDirectory
+        Copy-Item "$installerRoot\uninstall-unix.sh" $packageDirectory
     }
 
     Remove-Item -LiteralPath $publishDirectory -Recurse -Force

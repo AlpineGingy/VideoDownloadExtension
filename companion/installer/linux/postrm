@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -eu
+
+# Removes downloaded dependencies and Chrome manifests only on a true uninstall.
+if [ "${1:-}" = "remove" ] || [ "${1:-}" = "purge" ]; then
+  if [ -x /opt/media-finder/installer/uninstall-system-unix.sh ]; then
+    /opt/media-finder/installer/uninstall-system-unix.sh linux
+  else
+    rm -f \
+      /etc/opt/chrome/native-messaging-hosts/com.media_finder.companion.json \
+      /etc/opt/chrome_for_testing/native-messaging-hosts/com.media_finder.companion.json \
+      /etc/chromium/native-messaging-hosts/com.media_finder.companion.json
+    rm -rf /opt/media-finder
+  fi
+fi

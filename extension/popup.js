@@ -44,6 +44,8 @@ const subtitlesOptionElement = document.querySelector("#subtitles-option");
 const closeYtDlpButton = document.querySelector("#close-yt-dlp");
 const cancelYtDlpButton = document.querySelector("#cancel-yt-dlp");
 const copyCommandButton = document.querySelector("#copy-command");
+const settingsCompanionElement = document.querySelector("#settings-companion");
+const downloadCompanionButton = document.querySelector("#download-companion");
 
 const YT_DLP_SETTINGS_KEY = "ytDlpCommandOptions";
 const DOWNLOAD_JOBS_KEY = "companionDownloadJobs";
@@ -182,6 +184,7 @@ function openYtDlpDialog(item) {
     : "Choose defaults for one-click downloads.";
   submitOptionsButton.textContent = isDownload ? "Download" : "Save settings";
   copyCommandButton.hidden = !isDownload;
+  settingsCompanionElement.hidden = isDownload;
   ytDlpDialog.showModal();
 }
 
@@ -189,6 +192,11 @@ function openYtDlpDialog(item) {
 function closeYtDlpDialog() {
   if (ytDlpDialog.open) ytDlpDialog.close();
   selectedYtDlpItem = undefined;
+}
+
+/** Opens the persistent companion setup page from any popup entry point. */
+function openCompanionSetupPage() {
+  return chrome.tabs.create({ url: chrome.runtime.getURL("setup.html") });
 }
 
 /** Creates a real thumbnail image only when the page or yt-dlp supplied one. */
@@ -642,7 +650,8 @@ cancelYtDlpButton.addEventListener("click", closeYtDlpDialog);
 refreshButton.addEventListener("click", () => void scanActiveTab());
 settingsButton.addEventListener("click", () => openYtDlpDialog());
 copyCommandButton.addEventListener("click", () => void copySelectedCommand());
-openSetupButton.addEventListener("click", () => void chrome.tabs.create({ url: chrome.runtime.getURL("setup.html") }));
+openSetupButton.addEventListener("click", () => void openCompanionSetupPage());
+downloadCompanionButton.addEventListener("click", () => void openCompanionSetupPage());
 pageYtDlpButton.addEventListener("click", () => void startCompanionDownload({
   url: activeTab.url,
   kind: "page",

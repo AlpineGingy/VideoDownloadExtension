@@ -2,6 +2,7 @@
 
 const platformNameElement = document.querySelector("#platform-name");
 const downloadLinkElement = document.querySelector("#download-link");
+const alternateDownloadLinkElement = document.querySelector("#alternate-download-link");
 const releaseWarningElement = document.querySelector("#release-warning");
 const installStepElement = document.querySelector("#install-step");
 const verifyButton = document.querySelector("#verify-button");
@@ -22,22 +23,24 @@ async function detectReleasePackage() {
 
   if (/win/i.test(platformText)) {
     return {
-      runtime: `win-${architecture}`,
+      asset: `media-finder-companion-win-${architecture}-setup.exe`,
       name: `Windows ${architecture === "arm64" ? "ARM64" : "64-bit"}`,
-      instruction: "Double-click install-windows.cmd and approve the installation prompt."
+      instruction: "Double-click the downloaded Setup file and follow the prompts."
     };
   }
   if (/mac/i.test(platformText)) {
     return {
-      runtime: `osx-${architecture}`,
+      asset: `media-finder-companion-osx-${architecture}.pkg`,
       name: `macOS ${architecture === "arm64" ? "Apple Silicon" : "Intel"}`,
-      instruction: "Open Terminal in the extracted folder and run: sh install-unix.sh"
+      instruction: "Double-click the downloaded PKG and follow the macOS Installer prompts."
     };
   }
   return {
-    runtime: `linux-${architecture}`,
+    asset: `media-finder-companion-linux-${architecture}.deb`,
+    alternateAsset: `media-finder-companion-linux-${architecture}.rpm`,
+    alternateLabel: "Using Fedora, RHEL, or openSUSE? Download RPM",
     name: `Linux ${architecture === "arm64" ? "ARM64" : "64-bit"}`,
-    instruction: "Open a terminal in the extracted folder and run: sh install-unix.sh"
+    instruction: "Double-click the DEB on Ubuntu/Debian, or use the RPM link for Fedora-family systems."
   };
 }
 
@@ -59,17 +62,20 @@ async function initializeSetupPage() {
 
   const releaseBaseUrl = globalThis.MEDIA_FINDER_RELEASE_BASE_URL?.replace(/\/$/, "");
   if (releaseBaseUrl) {
-    downloadLinkElement.href = `${releaseBaseUrl}/media-finder-companion-${releasePackage.runtime}.zip`;
+    downloadLinkElement.href = `${releaseBaseUrl}/${releasePackage.asset}`;
+    if (releasePackage.alternateAsset) {
+      alternateDownloadLinkElement.href = `${releaseBaseUrl}/${releasePackage.alternateAsset}`;
+      alternateDownloadLinkElement.textContent = releasePackage.alternateLabel;
+      alternateDownloadLinkElement.hidden = false;
+    }
   } else {
-    const localPackageUrl = chrome.runtime.getURL(
-      `companion/artifacts/media-finder-companion-${releasePackage.runtime}.zip`
-    );
+    const localPackageUrl = chrome.runtime.getURL(`companion/artifacts/${releasePackage.asset}`);
     if (!await localPackageExists(localPackageUrl)) {
       releaseWarningElement.hidden = false;
       return;
     }
     downloadLinkElement.href = localPackageUrl;
-    downloadLinkElement.download = `media-finder-companion-${releasePackage.runtime}.zip`;
+    downloadLinkElement.download = releasePackage.asset;
   }
 
   downloadLinkElement.classList.remove("disabled");

@@ -5,9 +5,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 
-const popupHtml = fs.readFileSync(path.join(__dirname, "..", "popup.html"), "utf8");
-const popupScript = fs.readFileSync(path.join(__dirname, "..", "popup.js"), "utf8");
-const serviceWorkerScript = fs.readFileSync(path.join(__dirname, "..", "service-worker.js"), "utf8");
+const popupHtml = fs.readFileSync(path.join(__dirname, "..", "extension", "popup.html"), "utf8");
+const popupScript = fs.readFileSync(path.join(__dirname, "..", "extension", "popup.js"), "utf8");
+const serviceWorkerScript = fs.readFileSync(path.join(__dirname, "..", "extension", "service-worker.js"), "utf8");
 
 /** Proves the simplified popup keeps discovery and downloads as distinct top-level views. */
 test("popup separates finding media from managing downloads", () => {
@@ -49,4 +49,14 @@ test("popup exposes download destination and persistent job controls", () => {
       serviceWorkerScript.indexOf("persistNativeJobUpdate(update.jobId"),
     "Visible progress should broadcast before it is persisted."
   );
+});
+
+/** Proves Settings always provides a route to install or update the local companion. */
+test("settings opens the companion download page even when the setup prompt is hidden", () => {
+  assert.match(popupHtml, /id="settings-companion"/);
+  assert.match(popupHtml, /id="download-companion"[^>]*>Download companion</);
+  assert.match(popupScript, /settingsCompanionElement\.hidden = isDownload/);
+  assert.match(popupScript, /function openCompanionSetupPage\(\)/);
+  assert.match(popupScript, /chrome\.runtime\.getURL\("setup\.html"\)/);
+  assert.match(popupScript, /downloadCompanionButton\.addEventListener/);
 });
