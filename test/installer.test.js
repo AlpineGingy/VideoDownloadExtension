@@ -56,15 +56,22 @@ test("release workflow builds Windows, macOS, and Linux native packages", () => 
   assert.match(releaseWorkflow, /package-linux-native\.sh/);
 });
 
-/** Proves CI passes each packager the folder and target architecture its native tools expect. */
-test("release packaging uses assembled Windows files and an explicit RPM target", () => {
+/** Proves CI gives each native packager the files, runner, and architecture it expects. */
+test("release packaging uses assembled Windows files and native Linux ARM64 hardware", () => {
   assert.match(releaseWorkflow, /Resolve-Path "media-finder-companion-\$\{\{ matrix\.runtime \}\}"/);
+  assert.match(
+    releaseWorkflow,
+    /runner: ubuntu-24\.04-arm\s+runtime: linux-arm64/
+  );
   assert.match(windowsPackager, /MediaFinder\.iss/);
   const linuxPackager = fs.readFileSync(
     path.join(__dirname, "..", "companion", "scripts", "package-linux-native.sh"),
     "utf8"
   );
-  assert.match(linuxPackager, /rpmbuild -bb \\\n\s+--target "\$RPM_ARCHITECTURE"/);
+  assert.match(
+    linuxPackager,
+    /rpmbuild -bb \\\r?\n\s+--target "\$RPM_ARCHITECTURE"/
+  );
 });
 
 /** Proves a local Windows build can reproduce both architecture-specific Setup executables. */

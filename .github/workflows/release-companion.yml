@@ -35,7 +35,7 @@ jobs:
             runtime: linux-x64
             executable: media-finder-companion
             installer: unix
-          - runner: ubuntu-latest
+          - runner: ubuntu-24.04-arm
             runtime: linux-arm64
             executable: media-finder-companion
             installer: unix
