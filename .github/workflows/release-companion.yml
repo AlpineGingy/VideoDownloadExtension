@@ -1,0 +1,93 @@
+name: Release companion
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            runtime: win-x64
+            executable: media-finder-companion.exe
+            installer: windows
+          - runner: windows-latest
+            runtime: win-arm64
+            executable: media-finder-companion.exe
+            installer: windows
+          - runner: macos-latest
+            runtime: osx-x64
+            executable: media-finder-companion
+            installer: unix
+          - runner: macos-latest
+            runtime: osx-arm64
+            executable: media-finder-companion
+            installer: unix
+          - runner: ubuntu-latest
+            runtime: linux-x64
+            executable: media-finder-companion
+            installer: unix
+          - runner: ubuntu-latest
+            runtime: linux-arm64
+            executable: media-finder-companion
+            installer: unix
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Publish self-contained host
+        shell: pwsh
+        run: |
+          dotnet publish companion/MediaFinder.Companion/MediaFinder.Companion.csproj `
+            -c Release `
+            -r ${{ matrix.runtime }} `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -o companion-package
+      - name: Assemble package
+        shell: pwsh
+        run: |
+          $package = "media-finder-companion-${{ matrix.runtime }}"
+          New-Item -ItemType Directory -Path $package | Out-Null
+          Copy-Item "companion-package/${{ matrix.executable }}" $package
+          if ("${{ matrix.installer }}" -eq "windows") {
+            Copy-Item companion/scripts/install-windows.cmd $package
+            Copy-Item companion/scripts/install-windows.ps1 $package
+            Copy-Item companion/scripts/uninstall-windows.ps1 $package
+          } else {
+            Copy-Item companion/scripts/install-unix.sh $package
+            Copy-Item companion/scripts/uninstall-unix.sh $package
+          }
+          Compress-Archive -Path "$package/*" -DestinationPath "$package.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: media-finder-companion-${{ matrix.runtime }}
+          path: media-finder-companion-${{ matrix.runtime }}.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd release-assets
+          sha256sum *.zip > SHA256SUMS.txt
+          gh release create "${GITHUB_REF_NAME}" *.zip SHA256SUMS.txt --generate-notes

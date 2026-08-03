@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Set up Media Finder</title>
+    <link rel="stylesheet" href="setup.css">
+  </head>
+  <body>
+    <main class="setup-card">
+      <p class="eyebrow">Media Finder</p>
+      <h1>Set up one-click downloads</h1>
+      <p class="intro">
+        The local companion runs yt-dlp and FFmpeg on your computer. URLs and cookies stay local unless the website itself receives them during a download.
+      </p>
+
+      <section class="platform-panel">
+        <div>
+          <span class="label">Detected package</span>
+          <strong id="platform-name">Detecting your system...</strong>
+        </div>
+        <a id="download-link" class="primary-link disabled" aria-disabled="true">Download companion</a>
+      </section>
+
+      <div id="release-warning" class="warning" hidden>
+        Companion release downloads have not been configured yet. Build a local package using the instructions in <code>companion/README.md</code>.
+      </div>
+
+      <ol class="steps">
+        <li>Download and extract the companion package.</li>
+        <li id="install-step">Run the installer included in the package.</li>
+        <li>Restart Chrome, return here, and verify the connection.</li>
+      </ol>
+
+      <section class="verify-panel">
+        <div>
+          <h2>Connection status</h2>
+          <p id="connection-status">Not checked yet.</p>
+        </div>
+        <button id="verify-button" type="button">Verify companion</button>
+      </section>
+
+      <section class="details">
+        <h2>Where files go</h2>
+        <p>Completed files are saved in <code>Downloads/Media Finder</code>.</p>
+        <h2>What gets installed</h2>
+        <p>A self-contained Media Finder host, the latest official yt-dlp executable, and Deno for current YouTube JavaScript challenges. The installer offers optional FFmpeg setup for merging video/audio and conversions.</p>
+        <h2>Limits</h2>
+        <p>The companion does not bypass DRM or guarantee support for every website. Site support depends on the installed yt-dlp version and the media access you are authorized to use.</p>
+      </section>
+    </main>
+
+    <script src="setup-config.js"></script>
+    <script src="setup.js"></script>
+  </body>
+</html>

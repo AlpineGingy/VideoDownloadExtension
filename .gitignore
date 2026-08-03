@@ -1,0 +1,7 @@
+node_modules/
+coverage/
+.dotnet-home/
+**/bin/
+**/obj/
+companion/artifacts/
+.DS_Store

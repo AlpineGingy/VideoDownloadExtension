@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Media Finder</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <h1>Media Finder</h1>
+        <p id="page-title" class="page-title">Current tab</p>
+      </div>
+      <div class="header-actions">
+        <button id="settings" class="quiet-button" type="button">Settings</button>
+        <button id="refresh" class="quiet-button" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <nav class="main-tabs" role="tablist" aria-label="Media Finder views">
+      <button class="main-tab active" type="button" role="tab" aria-selected="true" data-main-view="find">Find media</button>
+      <button class="main-tab" type="button" role="tab" aria-selected="false" data-main-view="downloads">
+        Downloads <span id="download-count" class="count-pill">0</span>
+      </button>
+    </nav>
+
+    <main>
+      <div id="notice" class="notice" hidden></div>
+      <div id="companion-help" class="companion-help" hidden>
+        <div>
+          <strong>Finish one-time setup</strong>
+          <span>Install the local companion to download directly with yt-dlp.</span>
+        </div>
+        <button id="open-setup" class="button secondary" type="button">Set up</button>
+      </div>
+
+      <section id="find-panel" class="view-panel">
+        <div class="page-download-card">
+          <div>
+            <strong>Download from this page</strong>
+            <span>Best for sites such as YouTube and pages with streams.</span>
+          </div>
+          <button id="page-yt-dlp" class="button primary" type="button">Download</button>
+        </div>
+
+        <div class="source-heading">
+          <div class="source-tabs" role="tablist" aria-label="Discovery source">
+            <button class="source-tab active" type="button" role="tab" aria-selected="true" data-source-view="page">
+              Page <span id="page-count" class="count-pill">0</span>
+            </button>
+            <button class="source-tab" type="button" role="tab" aria-selected="false" data-source-view="network">
+              Network <span id="network-count" class="count-pill">0</span>
+            </button>
+          </div>
+        </div>
+
+        <details id="network-filters" class="filter-panel" hidden>
+          <summary>Search and filters</summary>
+          <label class="field full-width">
+            <span>Search results</span>
+            <input id="network-search" type="search" placeholder="URL, type, or extension">
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Media type</span>
+              <select id="kind-filter">
+                <option value="all">All media</option>
+                <option value="direct">Video files</option>
+                <option value="audio">Audio files</option>
+                <option value="manifest">Streams</option>
+                <option value="unknown">Other</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Captured from</span>
+              <select id="source-filter">
+                <option value="all">All requests</option>
+                <option value="network">Live network</option>
+                <option value="performance">Page history</option>
+              </select>
+            </label>
+          </div>
+        </details>
+
+        <div id="empty-state" class="empty-state">
+          <strong class="empty-title">Scanning this page...</strong>
+          <span>Play the media, then refresh if it has not appeared yet.</span>
+        </div>
+        <ul id="media-list" class="card-list" aria-live="polite"></ul>
+      </section>
+
+      <section id="downloads-panel" class="view-panel" hidden>
+        <div class="section-heading">
+          <div>
+            <h2>Your downloads</h2>
+            <p>Progress continues while this popup is closed.</p>
+          </div>
+          <button id="clear-finished" class="quiet-button" type="button">Clear finished</button>
+        </div>
+        <div id="downloads-empty" class="empty-state">
+          <strong class="empty-title">No downloads yet</strong>
+          <span>Start one from Find media. You can run several at once.</span>
+        </div>
+        <ul id="download-list" class="card-list" aria-live="polite"></ul>
+      </section>
+    </main>
+
+    <footer id="find-footer">
+      <span id="item-count">0 items</span>
+      <button id="clear" class="quiet-button" type="button">Clear results</button>
+    </footer>
+
+    <dialog id="yt-dlp-dialog" class="options-dialog">
+      <form id="yt-dlp-form">
+        <div class="dialog-heading">
+          <div>
+            <h2 id="dialog-title">Download options</h2>
+            <p id="dialog-description">These choices are remembered for next time.</p>
+          </div>
+          <button id="close-yt-dlp" class="dialog-close" type="button" aria-label="Close">Close</button>
+        </div>
+
+        <label class="field full-width destination-field">
+          <span>Save downloads to</span>
+          <select id="output-folder">
+            <option value="mediaFinder">Downloads / Media Finder</option>
+            <option value="downloads">Downloads</option>
+            <option value="videos">Videos</option>
+            <option value="desktop">Desktop</option>
+          </select>
+        </label>
+
+        <div class="option-grid">
+          <label class="field">
+            <span>Quality</span>
+            <select id="quality-option">
+              <option value="best">Best available</option>
+              <option value="1080p">Up to 1080p</option>
+              <option value="720p">Up to 720p</option>
+              <option value="audio">Audio only (MP3)</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Browser cookies</span>
+            <select id="cookies-browser">
+              <option value="none">Do not use cookies</option>
+              <option value="chrome">Chrome (automatic)</option>
+              <option value="edge">Microsoft Edge</option>
+              <option value="firefox">Firefox</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Merge container</span>
+            <select id="container-option">
+              <option value="auto">Automatic</option>
+              <option value="mp4">MP4</option>
+              <option value="mkv">MKV</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Download speed</span>
+            <select id="fragments-option">
+              <option value="1">Compatible</option>
+              <option value="4">Balanced</option>
+              <option value="8">Faster (recommended)</option>
+            </select>
+          </label>
+          <label class="field full-width">
+            <span>File name</span>
+            <select id="filename-style" title="Choose how downloaded files are named">
+              <option value="pageTitle">Page title + resolution (recommended)</option>
+              <option value="mediaTitle">Media title</option>
+              <option value="titleQuality">Media title + resolution</option>
+              <option value="titleId">Media title + source ID</option>
+            </select>
+          </label>
+          <label class="field full-width">
+            <span>Copied-command shell</span>
+            <select id="shell-option">
+              <option value="powershell">Windows PowerShell</option>
+              <option value="posix">macOS / Linux Terminal</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="checkbox-options">
+          <label><input id="metadata-option" type="checkbox"> Embed metadata</label>
+          <label><input id="thumbnail-option" type="checkbox"> Embed thumbnail</label>
+          <label><input id="subtitles-option" type="checkbox"> Embed English subtitles</label>
+        </div>
+
+        <p class="privacy-note">Chrome uses yt-dlp's built-in cookie reader on macOS/Linux. On Windows, Media Finder asks for cookie permission only when needed and sends matching site cookies through the local companion. Edge and Firefox use yt-dlp directly.</p>
+
+        <div class="dialog-actions">
+          <button id="cancel-yt-dlp" class="button secondary" type="button">Cancel</button>
+          <button id="copy-command" class="button secondary" type="button">Copy command</button>
+          <button id="submit-options" class="button primary" type="submit">Download</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="media-utils.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

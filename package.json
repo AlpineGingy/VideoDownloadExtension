@@ -1,0 +1,11 @@
+{
+  "name": "media-finder-extension",
+  "version": "0.8.3",
+  "private": true,
+  "description": "A Manifest V3 Chrome extension that discovers direct videos and stream manifests.",
+  "scripts": {
+    "test": "node --test",
+    "test:companion": "dotnet run --project companion/MediaFinder.Companion.SmokeTests/MediaFinder.Companion.SmokeTests.csproj -c Release",
+    "check": "node --check media-utils.js && node --check content-script.js && node --check service-worker.js && node --check popup.js && node --check setup.js"
+  }
+}
