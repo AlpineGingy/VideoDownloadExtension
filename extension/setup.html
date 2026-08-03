@@ -19,7 +19,10 @@
           <span class="label">Detected package</span>
           <strong id="platform-name">Detecting your system...</strong>
         </div>
-        <a id="download-link" class="primary-link disabled" aria-disabled="true">Download companion</a>
+        <div class="download-actions">
+          <a id="download-link" class="primary-link disabled" aria-disabled="true">Download companion</a>
+          <a id="alternate-download-link" class="secondary-link" hidden></a>
+        </div>
       </section>
 
       <div id="release-warning" class="warning" hidden>
@@ -27,8 +30,8 @@
       </div>
 
       <ol class="steps">
-        <li>Download and extract the companion package.</li>
-        <li id="install-step">Run the installer included in the package.</li>
+        <li>Download the companion installer for your system.</li>
+        <li id="install-step">Double-click the installer and follow the prompts.</li>
         <li>Restart Chrome, return here, and verify the connection.</li>
       </ol>
 
@@ -44,7 +47,7 @@
         <h2>Where files go</h2>
         <p>Completed files are saved in <code>Downloads/Media Finder</code>.</p>
         <h2>What gets installed</h2>
-        <p>A self-contained Media Finder host, the latest official yt-dlp executable, and Deno for current YouTube JavaScript challenges. The installer offers optional FFmpeg setup for merging video/audio and conversions.</p>
+        <p>A self-contained Media Finder host, the latest official yt-dlp executable, Deno for current YouTube JavaScript challenges, and FFmpeg for merging video/audio and conversions.</p>
         <h2>Limits</h2>
         <p>The companion does not bypass DRM or guarantee support for every website. Site support depends on the installed yt-dlp version and the media access you are authorized to use.</p>
       </section>

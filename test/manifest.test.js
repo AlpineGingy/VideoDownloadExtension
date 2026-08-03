@@ -15,7 +15,7 @@ function extensionIdFromKey(base64Key) {
 }
 
 test("manifest uses the native companion's stable authorized extension ID", () => {
-  const manifestPath = path.join(__dirname, "..", "manifest.json");
+  const manifestPath = path.join(__dirname, "..", "extension", "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 
   assert.equal(extensionIdFromKey(manifest.key), "nagidlmhdnnodcicinldienofcjnpeoi");
@@ -25,7 +25,7 @@ test("manifest uses the native companion's stable authorized extension ID", () =
 
 /** Proves Chrome's extension and toolbar icon mappings point to packaged PNG files. */
 test("manifest references every required extension icon size", () => {
-  const manifestPath = path.join(__dirname, "..", "manifest.json");
+  const manifestPath = path.join(__dirname, "..", "extension", "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   const expectedIcons = {
     "16": "assets/icons/icon-16.png",
@@ -40,6 +40,6 @@ test("manifest references every required extension icon size", () => {
     "32": expectedIcons["32"]
   });
   Object.values(expectedIcons).forEach((iconPath) => {
-    assert.ok(fs.existsSync(path.join(__dirname, "..", iconPath)), `${iconPath} does not exist.`);
+    assert.ok(fs.existsSync(path.join(__dirname, "..", "extension", iconPath)), `${iconPath} does not exist.`);
   });
 });

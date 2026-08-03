@@ -79,6 +79,19 @@ h1 {
   text-decoration: none;
 }
 
+.download-actions {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.secondary-link {
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .primary-link.disabled {
   pointer-events: none;
   opacity: 0.5;

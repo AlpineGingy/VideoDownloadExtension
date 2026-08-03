@@ -1,6 +1,7 @@
 node_modules/
 coverage/
 .dotnet-home/
+.tools/
 **/bin/
 **/obj/
 companion/artifacts/
