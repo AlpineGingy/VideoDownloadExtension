@@ -61,6 +61,7 @@ tar -C "$STAGING_ROOT" -czf "$RPM_TOP_DIRECTORY/SOURCES/media-finder-companion-$
   "media-finder-companion-$VERSION"
 cp "$INSTALLER_ROOT/linux/media-finder.spec" "$RPM_TOP_DIRECTORY/SPECS/media-finder.spec"
 rpmbuild -bb \
+  --target "$RPM_ARCHITECTURE" \
   --define "_topdir $RPM_TOP_DIRECTORY" \
   --define "media_finder_version $VERSION" \
   --define "media_finder_arch $RPM_ARCHITECTURE" \

@@ -85,7 +85,7 @@ jobs:
         shell: pwsh
         run: |
           $compiler = (Get-Command iscc.exe).Source
-          $packageRoot = (Resolve-Path companion-package).Path
+          $packageRoot = (Resolve-Path "media-finder-companion-${{ matrix.runtime }}").Path
           $outputDirectory = (Resolve-Path .).Path
           & $compiler `
             "/DPackageRoot=$packageRoot" `
