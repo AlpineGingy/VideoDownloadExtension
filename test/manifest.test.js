@@ -23,6 +23,13 @@ test("manifest uses the native companion's stable authorized extension ID", () =
   assert.ok(manifest.optional_permissions.includes("cookies"));
 });
 
+/** Proves the worker can observe top-level navigations before clearing captured network results. */
+test("manifest permits observing page navigations", () => {
+  const manifestPath = path.join(__dirname, "..", "extension", "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.ok(manifest.permissions.includes("webNavigation"));
+});
+
 /** Proves Chrome's extension and toolbar icon mappings point to packaged PNG files. */
 test("manifest references every required extension icon size", () => {
   const manifestPath = path.join(__dirname, "..", "extension", "manifest.json");

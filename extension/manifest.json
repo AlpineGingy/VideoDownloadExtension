@@ -15,6 +15,7 @@
     "nativeMessaging",
     "storage",
     "tabs",
+    "webNavigation",
     "webRequest"
   ],
   "optional_permissions": [

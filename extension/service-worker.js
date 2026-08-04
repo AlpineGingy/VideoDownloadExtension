@@ -6,6 +6,7 @@ const MAX_ITEMS_PER_TAB = 200;
 const MAX_DOWNLOAD_JOBS = 50;
 const NATIVE_HOST_NAME = "com.media_finder.companion";
 const DOWNLOAD_JOBS_KEY = "companionDownloadJobs";
+const CLEAR_NETWORK_ON_NAVIGATION_KEY = "clearNetworkOnNavigation";
 const FINISHED_STATUSES = new Set(["completed", "error", "cancelled"]);
 const VISIBLE_UPDATE_INTERVAL_MS = 250;
 
@@ -403,7 +404,7 @@ async function getTabMedia(tabId) {
   return stored[key] || [];
 }
 
-/** Merges candidates by discovery method and URL, preserving page/network separation. */
+/** Merges candidates by discovery method and URL, preserving page/network separation and network occurrence counts. */
 async function saveTabMedia(tabId, incomingItems) {
   if (tabId < 0 || !incomingItems.length) {
     return getTabMedia(tabId);
@@ -421,6 +422,7 @@ async function saveTabMedia(tabId, incomingItems) {
 
     const key = `${MediaUtils.getDiscoveryGroup(incoming.source)}:${url}`;
     const existing = byKey.get(key) || {};
+    const isRepeatedNetworkUrl = MediaUtils.getDiscoveryGroup(incoming.source) === "network" && byKey.has(key);
     const contentType = incoming.contentType || existing.contentType || "";
     byKey.set(key, {
       ...existing,
@@ -428,7 +430,8 @@ async function saveTabMedia(tabId, incomingItems) {
       url,
       contentType,
       kind: MediaUtils.classifyMedia(url, contentType),
-      discoveredAt: incoming.discoveredAt || Date.now()
+      discoveredAt: incoming.discoveredAt || Date.now(),
+      occurrences: isRepeatedNetworkUrl ? (existing.occurrences || 1) + 1 : (existing.occurrences || 1)
     });
   });
 
@@ -443,6 +446,25 @@ async function saveTabMedia(tabId, incomingItems) {
   });
   await chrome.action.setBadgeBackgroundColor({ tabId, color: "#2563eb" });
   return mergedItems;
+}
+
+/** Removes only captured network results after a top-level navigation when the user enabled automatic clearing. */
+async function clearNetworkMediaOnNavigation(tabId) {
+  const stored = await chrome.storage.local.get(CLEAR_NETWORK_ON_NAVIGATION_KEY);
+  if (stored[CLEAR_NETWORK_ON_NAVIGATION_KEY] === false) return;
+
+  const remainingItems = (await getTabMedia(tabId)).filter(
+    (item) => MediaUtils.getDiscoveryGroup(item.source) === "page"
+  );
+  if (remainingItems.length) {
+    await chrome.storage.session.set({ [storageKey(tabId)]: remainingItems });
+  } else {
+    await chrome.storage.session.remove(storageKey(tabId));
+  }
+  await chrome.action.setBadgeText({
+    tabId,
+    text: remainingItems.length ? String(Math.min(remainingItems.length, 99)) : ""
+  });
 }
 
 /** Finds a response Content-Type header regardless of header-name casing. */
@@ -483,6 +505,11 @@ chrome.webRequest.onHeadersReceived.addListener(
   { urls: ["<all_urls>"] },
   ["responseHeaders"]
 );
+
+// Clears only the current tab's network captures after the browser commits a new top-level document.
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.frameId === 0) void clearNetworkMediaOnNavigation(details.tabId);
+});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "MEDIA_FOUND" && sender.tab?.id !== undefined) {
