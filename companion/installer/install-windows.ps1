@@ -2,10 +2,42 @@ param(
     [switch]$SkipYtDlpDownload,
     [switch]$SkipDenoDownload,
     [switch]$SkipFfmpegDownload,
-    [switch]$SkipFfmpegInstall
+    [switch]$SkipFfmpegInstall,
+    [switch]$StopRunningCompanion
 )
 
 $ErrorActionPreference = "Stop"
+
+$installerLogDirectory = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "MediaFinder\Logs"
+$installerLogPath = Join-Path $installerLogDirectory "install-error.log"
+New-Item -ItemType Directory -Force -Path $installerLogDirectory | Out-Null
+
+# Records unexpected installer failures so the Setup dialog can point to useful troubleshooting details.
+trap {
+    $errorDetails = $_ | Out-String
+    Set-Content -LiteralPath $installerLogPath -Value $errorDetails -Encoding UTF8
+    Write-Error "Media Finder setup failed. Details were saved to $installerLogPath"
+    exit 1
+}
+
+# Returns only Media Finder processes running from this user's companion install folder.
+function Get-MediaFinderProcesses {
+    param([string[]]$ProcessNames)
+
+    $installDirectory = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "MediaFinder\Companion"
+    $resolvedInstallDirectory = [IO.Path]::GetFullPath($installDirectory).TrimEnd([IO.Path]::DirectorySeparatorChar)
+    Get-Process -Name $ProcessNames -ErrorAction SilentlyContinue |
+        Where-Object {
+            try {
+                $_.Path -and [IO.Path]::GetFullPath($_.Path).StartsWith(
+                    "$resolvedInstallDirectory$([IO.Path]::DirectorySeparatorChar)",
+                    [StringComparison]::OrdinalIgnoreCase)
+            }
+            catch {
+                $false
+            }
+        }
+}
 
 # Installs the self-contained host into the current user's local application data.
 $sourceExecutable = Join-Path $PSScriptRoot "media-finder-companion.exe"
@@ -15,23 +47,28 @@ if (-not (Test-Path -LiteralPath $sourceExecutable)) {
 
 $installDirectory = Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "MediaFinder\Companion"
 $installedExecutable = Join-Path $installDirectory "media-finder-companion.exe"
-$resolvedInstallDirectory = [IO.Path]::GetFullPath($installDirectory).TrimEnd([IO.Path]::DirectorySeparatorChar)
 
-# Refuses to replace executables that are still running so an upgrade cannot silently retain old files.
-$runningMediaFinderProcesses = Get-Process -Name "media-finder-companion", "yt-dlp" -ErrorAction SilentlyContinue |
-    Where-Object {
-        try {
-            $_.Path -and [IO.Path]::GetFullPath($_.Path).StartsWith(
-                "$resolvedInstallDirectory$([IO.Path]::DirectorySeparatorChar)",
-                [StringComparison]::OrdinalIgnoreCase)
-        }
-        catch {
-            $false
-        }
-    }
+# Prevents an upgrade from silently interrupting a video download.
+$runningYtDlpProcesses = @(Get-MediaFinderProcesses -ProcessNames @("yt-dlp"))
+if ($runningYtDlpProcesses) {
+    $processSummary = ($runningYtDlpProcesses | ForEach-Object { "yt-dlp (PID $($_.Id))" }) -join ", "
+    Write-Error "An active download is using $processSummary. Let it finish or cancel it before updating Media Finder."
+    exit 21
+}
+
+# Allows Setup to close an idle companion only after the user explicitly approves it.
+$runningMediaFinderProcesses = @(Get-MediaFinderProcesses -ProcessNames @("media-finder-companion"))
 if ($runningMediaFinderProcesses) {
     $processSummary = ($runningMediaFinderProcesses | ForEach-Object { "$($_.ProcessName) (PID $($_.Id))" }) -join ", "
-    throw "Media Finder is still running: $processSummary. Cancel active downloads, fully exit Chrome, then run this installer again."
+    if (-not $StopRunningCompanion) {
+        Write-Error "Media Finder is still running: $processSummary. Setup can close the idle companion after you approve it."
+        exit 20
+    }
+    $runningMediaFinderProcesses | Stop-Process -Force
+    Start-Sleep -Milliseconds 500
+    if (Get-MediaFinderProcesses -ProcessNames @("media-finder-companion")) {
+        throw "Media Finder could not be closed. Fully exit Chrome, then run Setup again."
+    }
 }
 
 New-Item -ItemType Directory -Force -Path $installDirectory | Out-Null

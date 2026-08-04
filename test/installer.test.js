@@ -30,8 +30,23 @@ const windowsPackager = fs.readFileSync(
 test("Windows installer uses unpackaged yt-dlp and detects running Media Finder processes", () => {
   assert.match(windowsInstaller, /yt-dlp_win\.zip/);
   assert.match(windowsInstaller, /_internal/);
-  assert.match(windowsInstaller, /Get-Process -Name "media-finder-companion", "yt-dlp"/);
-  assert.match(windowsInstaller, /fully exit Chrome/);
+  assert.match(windowsInstaller, /function Get-MediaFinderProcesses/);
+  assert.match(windowsInstaller, /ProcessNames @\("media-finder-companion"\)/);
+  assert.match(windowsInstaller, /ProcessNames @\("yt-dlp"\)/);
+  assert.match(windowsInstaller, /Media Finder could not be closed/);
+});
+
+/** Proves Windows updates preserve active downloads and offer to close only an idle companion. */
+test("Windows setup explains active processes and records detailed install failures", () => {
+  const innoInstaller = fs.readFileSync(
+    path.join(__dirname, "..", "companion", "installer", "windows", "MediaFinder.iss"),
+    "utf8"
+  );
+  assert.match(windowsInstaller, /\[switch\]\$StopRunningCompanion/);
+  assert.match(windowsInstaller, /exit 21/);
+  assert.match(windowsInstaller, /install-error\.log/);
+  assert.match(innoInstaller, /Close its idle companion and continue the update/);
+  assert.match(innoInstaller, /An active yt-dlp download is running/);
 });
 
 /** Proves native Unix packages register manifests in Chrome's system host directories. */
