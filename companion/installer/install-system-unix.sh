@@ -8,7 +8,7 @@ MACHINE_NAME=$(uname -m)
 
 if [ "$PLATFORM" = "macos" ] && [ "$SYSTEM_NAME" = "Darwin" ]; then
   INSTALL_DIRECTORY="/Library/Application Support/Media Finder/Companion"
-  YT_DLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+  YT_DLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos.zip"
   if [ "$MACHINE_NAME" = "arm64" ]; then
     DENO_TARGET="aarch64-apple-darwin"
     FFMPEG_TARGET="darwin-arm64"
@@ -54,8 +54,25 @@ if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1; then
 fi
 
 echo "Downloading the latest official yt-dlp binary..."
-curl --fail --location "$YT_DLP_URL" --output "$INSTALL_DIRECTORY/yt-dlp"
+YT_DLP_ARCHIVE="$INSTALL_DIRECTORY/yt-dlp-macos.zip"
+curl --fail --location "$YT_DLP_URL" --output "$YT_DLP_ARCHIVE"
+if [ "$PLATFORM" = "macos" ]; then
+  unzip -oq "$YT_DLP_ARCHIVE" -d "$INSTALL_DIRECTORY"
+  rm -f -- "$YT_DLP_ARCHIVE"
+else
+  mv -f "$YT_DLP_ARCHIVE" "$INSTALL_DIRECTORY/yt-dlp"
+fi
 chmod 755 "$INSTALL_DIRECTORY/yt-dlp"
+
+# Re-signs yt-dlp's extracted Python runtime so macOS accepts every native library it loads.
+if [ "$PLATFORM" = "macos" ]; then
+  find "$INSTALL_DIRECTORY/_internal" -type f | while IFS= read -r nativeFile; do
+    if file -b "$nativeFile" | grep -q "Mach-O"; then
+      codesign --force --sign - "$nativeFile"
+    fi
+  done
+  codesign --force --sign - "$INSTALL_DIRECTORY/yt-dlp"
+fi
 
 DENO_ARCHIVE="$INSTALL_DIRECTORY/deno-download.zip"
 echo "Downloading the official Deno runtime for YouTube support..."

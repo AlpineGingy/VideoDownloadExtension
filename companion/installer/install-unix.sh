@@ -14,7 +14,7 @@ MACHINE_NAME=$(uname -m)
 if [ "$SYSTEM_NAME" = "Darwin" ]; then
   INSTALL_DIRECTORY="$HOME/Library/Application Support/Media Finder/Companion"
   HOST_MANIFEST_DIRECTORY="$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
-  YT_DLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+  YT_DLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos.zip"
   if [ "$MACHINE_NAME" = "arm64" ]; then
     DENO_TARGET="aarch64-apple-darwin"
     FFMPEG_TARGET="darwin-arm64"
@@ -44,14 +44,32 @@ mkdir -p "$INSTALL_DIRECTORY" "$HOST_MANIFEST_DIRECTORY"
 cp "$SOURCE_EXECUTABLE" "$INSTALL_DIRECTORY/media-finder-companion"
 chmod 755 "$INSTALL_DIRECTORY/media-finder-companion"
 
-echo "Downloading the latest official yt-dlp binary..."
-curl --fail --location "$YT_DLP_URL" --output "$INSTALL_DIRECTORY/yt-dlp"
-chmod 755 "$INSTALL_DIRECTORY/yt-dlp"
-
 if ! command -v unzip >/dev/null 2>&1; then
-  echo "unzip is required to install the Deno runtime." >&2
+  echo "unzip is required to install the yt-dlp and Deno runtimes." >&2
   exit 1
 fi
+
+echo "Downloading the latest official yt-dlp binary..."
+YT_DLP_ARCHIVE="$INSTALL_DIRECTORY/yt-dlp-macos.zip"
+curl --fail --location "$YT_DLP_URL" --output "$YT_DLP_ARCHIVE"
+if [ "$SYSTEM_NAME" = "Darwin" ]; then
+  unzip -oq "$YT_DLP_ARCHIVE" -d "$INSTALL_DIRECTORY"
+  rm -f -- "$YT_DLP_ARCHIVE"
+else
+  mv -f "$YT_DLP_ARCHIVE" "$INSTALL_DIRECTORY/yt-dlp"
+fi
+chmod 755 "$INSTALL_DIRECTORY/yt-dlp"
+
+# Re-signs yt-dlp's extracted Python runtime so macOS accepts every native library it loads.
+if [ "$SYSTEM_NAME" = "Darwin" ]; then
+  find "$INSTALL_DIRECTORY/_internal" -type f | while IFS= read -r nativeFile; do
+    if file -b "$nativeFile" | grep -q "Mach-O"; then
+      codesign --force --sign - "$nativeFile"
+    fi
+  done
+  codesign --force --sign - "$INSTALL_DIRECTORY/yt-dlp"
+fi
+
 DENO_ARCHIVE="$INSTALL_DIRECTORY/deno-download.zip"
 echo "Downloading the official Deno runtime for YouTube support..."
 curl --fail --location \
