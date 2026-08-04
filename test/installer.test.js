@@ -56,6 +56,11 @@ test("release workflow builds Windows, macOS, and Linux native packages", () => 
   assert.match(releaseWorkflow, /package-linux-native\.sh/);
 });
 
+/** Proves release publication identifies the repository without relying on a checkout. */
+test("release publication supplies its GitHub repository explicitly", () => {
+  assert.match(releaseWorkflow, /GH_REPO: \$\{\{ github\.repository \}\}/);
+});
+
 /** Proves CI gives each native packager the files, runner, and architecture it expects. */
 test("release packaging uses assembled Windows files and native Linux ARM64 hardware", () => {
   assert.match(releaseWorkflow, /Resolve-Path "media-finder-companion-\$\{\{ matrix\.runtime \}\}"/);
