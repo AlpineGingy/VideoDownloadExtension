@@ -43,6 +43,22 @@
       addCandidate(source.src, "page");
     });
 
+    // Vimeo's player often feeds the browser byte-ranged MP4 pieces. Give yt-dlp the
+    // stable embed page instead, so it can discover and assemble the complete video.
+    document.querySelectorAll("iframe[src]").forEach((frame) => {
+      try {
+        const frameUrl = new URL(frame.src, document.baseURI);
+        if (
+          frameUrl.hostname === "player.vimeo.com" &&
+          /^\/video\/\d+(?:\/|$)/.test(frameUrl.pathname)
+        ) {
+          addCandidate(frameUrl.href, "page");
+        }
+      } catch {
+        // Ignore an iframe whose source cannot be parsed as a usable URL.
+      }
+    });
+
     performance.getEntriesByType("resource").forEach((entry) => {
       const kind = MediaUtils.classifyMedia(entry.name);
       if (kind !== "unknown") {
