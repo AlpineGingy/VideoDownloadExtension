@@ -46,8 +46,11 @@ const cancelYtDlpButton = document.querySelector("#cancel-yt-dlp");
 const copyCommandButton = document.querySelector("#copy-command");
 const settingsCompanionElement = document.querySelector("#settings-companion");
 const downloadCompanionButton = document.querySelector("#download-companion");
+const settingsDiscoveryElement = document.querySelector("#settings-discovery");
+const clearNetworkOnNavigationElement = document.querySelector("#clear-network-on-navigation");
 
 const YT_DLP_SETTINGS_KEY = "ytDlpCommandOptions";
+const CLEAR_NETWORK_ON_NAVIGATION_KEY = "clearNetworkOnNavigation";
 const DOWNLOAD_JOBS_KEY = "companionDownloadJobs";
 const FINISHED_STATUSES = new Set(["completed", "error", "cancelled"]);
 const DOWNLOAD_RENDER_INTERVAL_MS = 500;
@@ -165,13 +168,14 @@ async function ensureChromeCookiePermission(options) {
   return chrome.permissions.request(permission);
 }
 
-/** Loads saved preferences without storing any media URL. */
+/** Loads saved download and discovery preferences without storing any media URL. */
 async function loadYtDlpOptions() {
-  const stored = await chrome.storage.local.get(YT_DLP_SETTINGS_KEY);
+  const stored = await chrome.storage.local.get([YT_DLP_SETTINGS_KEY, CLEAR_NETWORK_ON_NAVIGATION_KEY]);
   applyYtDlpOptions({
     ...DEFAULT_YT_DLP_OPTIONS,
     ...(stored[YT_DLP_SETTINGS_KEY] || {})
   });
+  clearNetworkOnNavigationElement.checked = stored[CLEAR_NETWORK_ON_NAVIGATION_KEY] !== false;
 }
 
 /** Opens the same focused dialog for either settings or one customized download. */
@@ -185,6 +189,7 @@ function openYtDlpDialog(item) {
   submitOptionsButton.textContent = isDownload ? "Download" : "Save settings";
   copyCommandButton.hidden = !isDownload;
   settingsCompanionElement.hidden = isDownload;
+  settingsDiscoveryElement.hidden = isDownload;
   ytDlpDialog.showModal();
 }
 
@@ -233,6 +238,13 @@ function createMediaItem(item) {
   formatBadge.className = "format-badge";
   formatBadge.textContent = (MediaUtils.inferMediaExtension(item.url, item.contentType) || "no ext").toUpperCase();
   badgeGroup.append(kindBadge, formatBadge);
+  if (item.occurrences > 1) {
+    const occurrenceBadge = document.createElement("span");
+    occurrenceBadge.className = "format-badge";
+    occurrenceBadge.textContent = `×${item.occurrences}`;
+    occurrenceBadge.title = `Seen ${item.occurrences} times`;
+    badgeGroup.append(occurrenceBadge);
+  }
   const source = document.createElement("span");
   source.className = "source-label";
   source.textContent = getSourceLabel(item.source);
@@ -574,7 +586,10 @@ async function startCompanionDownload(item, options = getYtDlpOptions()) {
 /** Saves defaults or starts the customized media selected in the dialog. */
 async function submitOptions() {
   const options = getYtDlpOptions();
-  await chrome.storage.local.set({ [YT_DLP_SETTINGS_KEY]: options });
+  await chrome.storage.local.set({
+    [YT_DLP_SETTINGS_KEY]: options,
+    [CLEAR_NETWORK_ON_NAVIGATION_KEY]: clearNetworkOnNavigationElement.checked
+  });
   if (!selectedYtDlpItem) {
     closeYtDlpDialog();
     showNotice("Download settings saved.");
