@@ -61,13 +61,15 @@ test("settings opens the companion download page even when the setup prompt is h
   assert.match(popupScript, /downloadCompanionButton\.addEventListener/);
 });
 
-/** Proves discovery settings can clear per-tab network captures after navigation. */
-test("network results display occurrence counts and can clear on navigation", () => {
+/** Proves page results clear on navigation while the setting controls whether network captures are retained. */
+test("network results display occurrence counts and page results clear on navigation", () => {
   assert.match(popupHtml, /id="clear-network-on-navigation"/);
   assert.match(popupHtml, /Clear when the page loads or refreshes/);
   assert.match(popupScript, /CLEAR_NETWORK_ON_NAVIGATION_KEY/);
   assert.match(popupScript, /occurrenceBadge\.textContent = `×\$\{item\.occurrences\}`/);
   assert.match(serviceWorkerScript, /occurrences: isRepeatedNetworkUrl \? \(existing\.occurrences \|\| 1\) \+ 1/);
-  assert.match(serviceWorkerScript, /function clearNetworkMediaOnNavigation\(tabId\)/);
-  assert.match(serviceWorkerScript, /chrome\.webNavigation\.onCommitted\.addListener/);
+  assert.match(serviceWorkerScript, /function clearTabMediaOnNavigation\(tabId\)/);
+  assert.match(serviceWorkerScript, /!shouldClearNetwork && MediaUtils\.getDiscoveryGroup\(item\.source\) === "network"/);
+  assert.match(serviceWorkerScript, /chrome\.webNavigation\.onBeforeNavigate\.addListener\(handleTopLevelNavigation\)/);
+  assert.match(serviceWorkerScript, /chrome\.webNavigation\.onHistoryStateUpdated\.addListener\(handleTopLevelNavigation\)/);
 });
