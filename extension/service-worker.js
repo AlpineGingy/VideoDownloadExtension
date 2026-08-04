@@ -448,13 +448,12 @@ async function saveTabMedia(tabId, incomingItems) {
   return mergedItems;
 }
 
-/** Removes only captured network results after a top-level navigation when the user enabled automatic clearing. */
-async function clearNetworkMediaOnNavigation(tabId) {
+/** Clears page discoveries on every top-level navigation and optionally preserves network captures when the user requested it. */
+async function clearTabMediaOnNavigation(tabId) {
   const stored = await chrome.storage.local.get(CLEAR_NETWORK_ON_NAVIGATION_KEY);
-  if (stored[CLEAR_NETWORK_ON_NAVIGATION_KEY] === false) return;
-
+  const shouldClearNetwork = stored[CLEAR_NETWORK_ON_NAVIGATION_KEY] !== false;
   const remainingItems = (await getTabMedia(tabId)).filter(
-    (item) => MediaUtils.getDiscoveryGroup(item.source) === "page"
+    (item) => !shouldClearNetwork && MediaUtils.getDiscoveryGroup(item.source) === "network"
   );
   if (remainingItems.length) {
     await chrome.storage.session.set({ [storageKey(tabId)]: remainingItems });
@@ -465,6 +464,11 @@ async function clearNetworkMediaOnNavigation(tabId) {
     tabId,
     text: remainingItems.length ? String(Math.min(remainingItems.length, 99)) : ""
   });
+}
+
+/** Clears stale tab discoveries only for a top-level browser navigation event. */
+function handleTopLevelNavigation(details) {
+  if (details.frameId === 0) void clearTabMediaOnNavigation(details.tabId);
 }
 
 /** Finds a response Content-Type header regardless of header-name casing. */
@@ -506,10 +510,9 @@ chrome.webRequest.onHeadersReceived.addListener(
   ["responseHeaders"]
 );
 
-// Clears only the current tab's network captures after the browser commits a new top-level document.
-chrome.webNavigation.onCommitted.addListener((details) => {
-  if (details.frameId === 0) void clearNetworkMediaOnNavigation(details.tabId);
-});
+// Clears before a full page load and when a single-page app changes its top-level route.
+chrome.webNavigation.onBeforeNavigate.addListener(handleTopLevelNavigation);
+chrome.webNavigation.onHistoryStateUpdated.addListener(handleTopLevelNavigation);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "MEDIA_FOUND" && sender.tab?.id !== undefined) {
