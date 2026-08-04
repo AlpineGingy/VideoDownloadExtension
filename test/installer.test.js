@@ -56,6 +56,21 @@ test("macOS and Linux native packages use system Chrome manifest locations", () 
   assert.match(systemUnixInstaller, /\/etc\/chromium\/native-messaging-hosts/);
 });
 
+/** Proves macOS avoids the one-file yt-dlp runtime and signs its extracted native libraries. */
+test("macOS installers unpack and locally sign yt-dlp", () => {
+  const userUnixInstaller = fs.readFileSync(
+    path.join(__dirname, "..", "companion", "installer", "install-unix.sh"),
+    "utf8"
+  );
+  for (const installer of [systemUnixInstaller, userUnixInstaller]) {
+    assert.match(installer, /yt-dlp_macos\.zip/);
+    assert.match(installer, /unzip -oq "\$YT_DLP_ARCHIVE" -d "\$INSTALL_DIRECTORY"/);
+    assert.match(installer, /find "\$INSTALL_DIRECTORY\/_internal" -type f/);
+    assert.match(installer, /codesign --force --sign - "\$nativeFile"/);
+    assert.match(installer, /codesign --force --sign - "\$INSTALL_DIRECTORY\/yt-dlp"/);
+  }
+});
+
 /** Proves the setup page offers native double-click installers instead of archive-first setup. */
 test("setup page selects EXE, PKG, DEB, and RPM release assets", () => {
   assert.match(setupScript, /-setup\.exe/);
